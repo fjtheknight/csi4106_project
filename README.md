@@ -19,3 +19,7 @@ added a "none" class with a large number of random images. the purpose of this c
 
 Added class weights to solve the issue with imbalanced data
 => improved prediction and properly recognized none vs canada_ontario_cvo images used for training. however, as the images used for training are very similar, there was overfitting and testing with other canada_ontario_cvo images resulted in wrong predictions
+
+## v0.4
+
+Added more variations of the canada_ontario_cvo images to reduce overfitting
