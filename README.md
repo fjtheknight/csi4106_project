@@ -23,3 +23,13 @@ Added class weights to solve the issue with imbalanced data
 ## v0.4
 
 Added more variations of the canada_ontario_cvo images to reduce overfitting
+Added image rescaling and resizing and augmentation
+=> improved accuracy and prediction
+==> but now issue is that we getting 100% accuracy, which prolly means overfitting
+
+### stuff to do
+
+- save model to folder
+- add tf board
+- if possible, add other classes
+- if possible, try AlexNet
