@@ -177,32 +177,40 @@ function App() {
       </Group>
 
       <Group position="center" spacing="xl">
-        <Dropzone
-          loading={loading}
-          onDrop={(files) => {
-            console.log("accepted files", files);
-            handleImageChange(files);
-          }}
-          onReject={(files) => console.log("rejected files", files)}
-          maxSize={3 * 1024 ** 2}
-          accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
-        >
-          {(status) => dropzoneChildren(status, theme)}
-        </Dropzone>
-        <Stack
-          style={{ marginTop: "2em", width: "12rem" }}
-          direction="row"
-          spacing={1}
-        >
-          <Text size="xl">
-            {predictedClass === null
-              ? "Prediction:"
-              : `Prediction: ${predictedClass}`}
-          </Text>
-          <Text size="xl">
-            {confidence === null ? "Confidence:" : `Confidence: ${confidence}%`}
-          </Text>
-        </Stack>
+        {model ? (
+          <div>
+            <Dropzone
+              loading={loading}
+              onDrop={(files) => {
+                console.log("accepted files", files);
+                handleImageChange(files);
+              }}
+              onReject={(files) => console.log("rejected files", files)}
+              maxSize={3 * 1024 ** 2}
+              accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
+            >
+              {(status) => dropzoneChildren(status, theme)}
+            </Dropzone>
+            <Stack
+              style={{ marginTop: "2em", width: "12rem" }}
+              direction="row"
+              spacing={1}
+            >
+              <Text size="xl">
+                {predictedClass === null
+                  ? "Prediction:"
+                  : `Prediction: ${predictedClass}`}
+              </Text>
+              <Text size="xl">
+                {confidence === null
+                  ? "Confidence:"
+                  : `Confidence: ${confidence}%`}
+              </Text>
+            </Stack>
+          </div>
+        ) : (
+          <div>Loading model...</div>
+        )}
       </Group>
     </div>
   );
