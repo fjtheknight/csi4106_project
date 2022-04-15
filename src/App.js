@@ -142,6 +142,8 @@ function App() {
       const model_url = "model/model.json";
 
       const model = await tf.loadGraphModel(model_url);
+      console.log("model");
+      console.log(model);
 
       setModel(model);
     };
