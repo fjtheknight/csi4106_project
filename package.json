@@ -1,6 +1,5 @@
 {
   "name": "csi4106-project-webapp",
-  "homepage": "https://fjtheknight.github.io/csi4106_project",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
