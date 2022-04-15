@@ -27,9 +27,14 @@ Added image rescaling and resizing and augmentation
 => improved accuracy and prediction
 ==> but now issue is that we getting 100% accuracy, which prolly means overfitting
 
+## v0.5
+
+added tensorboard and models/logs logging
+
 ### stuff to do
 
 - save model to folder
 - add tf board
 - if possible, add other classes
 - if possible, try AlexNet
+- grayscale?
