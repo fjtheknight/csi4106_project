@@ -5,22 +5,29 @@ import {
   Group,
   Text,
   useMantineTheme,
-  MantineTheme,
   Stack,
-  Chip,
   Title,
-  LoadingOverlay,
+  createStyles,
 } from "@mantine/core";
-import { Upload, Photo, X, Icon as TablerIcon } from "tabler-icons-react";
-import { Dropzone, DropzoneStatus, IMAGE_MIME_TYPE } from "@mantine/dropzone";
+import { Upload, Photo, X } from "tabler-icons-react";
+import { Dropzone, MIME_TYPES } from "@mantine/dropzone";
+
+const useStyles = createStyles((theme) => ({
+  root: {
+    padding: theme.spacing.xl,
+    margin: theme.spacing.xl,
+  },
+  group: { padding: theme.spacing.xl, margin: theme.spacing.xl },
+  title: {
+    backgroundColor: theme.colors.gray[0],
+  },
+}));
 
 function getIconColor(status, theme) {
   return status.accepted
-    ? theme.colors[theme.primaryColor][theme.colorScheme === "dark" ? 4 : 6]
+    ? theme.colors.green[6]
     : status.rejected
-    ? theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
-    : theme.colorScheme === "dark"
-    ? theme.colors.dark[0]
+    ? theme.colors.red[6]
     : theme.colors.gray[7];
 }
 
@@ -81,6 +88,7 @@ const createHTMLImageElement = (imageSrc) => {
 
 function App() {
   const theme = useMantineTheme();
+  const { classes } = useStyles();
 
   const [loading, setLoading] = useState(false);
   const [confidence, setConfidence] = useState(null);
@@ -90,14 +98,13 @@ function App() {
   const [classLabels, setClassLabels] = useState(null);
 
   const handleImageChange = async (files) => {
+    setLoading(true);
     if (files.length === 0) {
       setConfidence(null);
       setPredictedClass(null);
     }
 
     if (files.length === 1) {
-      setLoading(true);
-
       const imageSrc = await readImageFile(files[0]);
       const image = await createHTMLImageElement(imageSrc);
 
@@ -109,7 +116,8 @@ function App() {
           .toFloat()
           .expandDims();
         const result = model.predict(tensorImg);
-
+        console.log("result");
+        console.log(result);
         const predictions = result.dataSync();
         const predicted_index = result.as1D().argMax().dataSync()[0];
         console.log("predictions");
@@ -125,8 +133,8 @@ function App() {
 
       setPredictedClass(predictedClass);
       setConfidence(confidence);
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -134,6 +142,8 @@ function App() {
       const model_url = "model/model.json";
 
       const model = await tf.loadGraphModel(model_url);
+      console.log("model");
+      console.log(model);
 
       setModel(model);
     };
@@ -148,40 +158,60 @@ function App() {
     getClassLabels();
   }, []);
 
+  console.log(loading);
   return (
-    <div className="App">
-      <Title order={1}>
+    <div className={classes.root}>
+      <Title order={3} align="center">
         CSI4106 Project: Veterinary Certificate of Accreditation Classifier
       </Title>
-      <Title order={3}>Firas Jribi</Title>
-      <Title order={3}>Emilie Fortin</Title>
-      <Title order={3}>Abir Boutahri</Title>
-      <LoadingOverlay visible={loading} />
-      <Dropzone
-        onDrop={(files) => {
-          console.log("accepted files", files);
-          handleImageChange(files);
-        }}
-        onReject={(files) => console.log("rejected files", files)}
-        maxSize={3 * 1024 ** 2}
-        accept={IMAGE_MIME_TYPE}
+      <Group
+        position="left"
+        spacing="xs"
+        direction="column"
+        align="center"
+        className={classes.group}
       >
-        {(status) => dropzoneChildren(status, theme)}
-      </Dropzone>
-      <Stack
-        style={{ marginTop: "2em", width: "12rem" }}
-        direction="row"
-        spacing={1}
-      >
-        <Title order={4}>
-          {predictedClass === null
-            ? "Prediction:"
-            : `Prediction: ${predictedClass}`}
-        </Title>
-        <Title order={4}>
-          {confidence === null ? "Confidence:" : `Confidence: ${confidence}%`}
-        </Title>
-      </Stack>
+        <Text size="xl">Firas Jribi</Text>
+        <Text size="xl">Emilie Fortin</Text>
+        <Text size="xl">Abir Boutahri</Text>
+      </Group>
+
+      <Group position="center" spacing="xl">
+        {model ? (
+          <div>
+            <Dropzone
+              loading={loading}
+              onDrop={(files) => {
+                console.log("accepted files", files);
+                handleImageChange(files);
+              }}
+              onReject={(files) => console.log("rejected files", files)}
+              maxSize={3 * 1024 ** 2}
+              accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
+            >
+              {(status) => dropzoneChildren(status, theme)}
+            </Dropzone>
+            <Stack
+              style={{ marginTop: "2em", width: "12rem" }}
+              direction="row"
+              spacing={1}
+            >
+              <Text size="xl">
+                {predictedClass === null
+                  ? "Prediction:"
+                  : `Prediction: ${predictedClass}`}
+              </Text>
+              <Text size="xl">
+                {confidence === null
+                  ? "Confidence:"
+                  : `Confidence: ${confidence}%`}
+              </Text>
+            </Stack>
+          </div>
+        ) : (
+          <div>Loading model...</div>
+        )}
+      </Group>
     </div>
   );
 }

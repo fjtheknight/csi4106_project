@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "CSI4106 Project",
+  "name": "CSI4106 Project: Veterinary Certificate of Accreditation Classifier",
   "icons": [
     {
       "src": "favicon.ico",
