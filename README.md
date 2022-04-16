@@ -33,8 +33,12 @@ added tensorboard and models/logs logging
 
 ### stuff to do
 
-- save model to folder
-- add tf board
 - if possible, add other classes
 - if possible, try AlexNet
 - grayscale?
+
+#### convert model to js graph model
+- conda activate csi4106
+- cd to project location 
+- run `tensorflowjs_converter  --input_format=tf_saved_model  --output_format=tfjs_graph_model  ./models/20220415_070056 ./tfjs_models/20220415_070056` (replace folder names with the most recent ones)
+- copy model into latest folder in public folder in react app
