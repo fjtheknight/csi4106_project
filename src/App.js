@@ -5,7 +5,6 @@ import {
   Group,
   Text,
   useMantineTheme,
-  Stack,
   Title,
   createStyles,
 } from "@mantine/core";
@@ -14,12 +13,16 @@ import { Dropzone, MIME_TYPES } from "@mantine/dropzone";
 
 const useStyles = createStyles((theme) => ({
   root: {
-    padding: theme.spacing.xl,
-    margin: theme.spacing.xl,
+    padding: theme.spacing.md,
+    margin: theme.spacing.md,
   },
-  group: { padding: theme.spacing.xl, margin: theme.spacing.xl },
+  group: { padding: theme.spacing.md, margin: theme.spacing.md },
   title: {
     backgroundColor: theme.colors.gray[0],
+  },
+  img: {
+    maxWidth: 200,
+    maxHeight: 120,
   },
 }));
 
@@ -57,10 +60,10 @@ export const dropzoneChildren = (status, theme) => (
 
     <div>
       <Text size="xl" inline>
-        Drag images here or click to select files
+        Drag an image here or click to select a file
       </Text>
       <Text size="sm" color="dimmed" inline mt={7}>
-        Attach as many files as you like, each file should not exceed 5mb
+        File should not exceed 5mb, jpeg or png only.
       </Text>
     </div>
   </Group>
@@ -97,6 +100,10 @@ function App() {
   const [model, setModel] = useState(null);
   const [classLabels, setClassLabels] = useState(null);
 
+  const [picture, setPicture] = useState(null);
+  const [picturePath, setPicturePath] = useState(null);
+  const [errorText, setErrorText] = useState(null);
+
   const handleImageChange = async (files) => {
     setLoading(true);
     if (files.length === 0) {
@@ -108,26 +115,38 @@ function App() {
       const imageSrc = await readImageFile(files[0]);
       const image = await createHTMLImageElement(imageSrc);
 
+      setPicture(URL.createObjectURL(files[0]));
+      setPicturePath(files[0].path);
       // tf.tidy for automatic memory cleanup
       const [predictedClass, confidence] = tf.tidy(() => {
         const tensorImg = tf.browser
           .fromPixels(image)
           .resizeNearestNeighbor([256, 256])
           .toFloat()
-          .expandDims();
+          .expandDims(0);
+        // console.log("tensorImg");
+        // console.log(tensorImg);
         const result = model.predict(tensorImg);
-        console.log("result");
-        console.log(result);
+        // result.print();
+
+        // console.log("result");
+        // console.log(result);
         const predictions = result.dataSync();
         const predicted_index = result.as1D().argMax().dataSync()[0];
-        console.log("predictions");
-        console.log(predictions);
-        console.log("predicted_index");
-        console.log(predicted_index);
+        // console.log("predictions");
+        // console.log(predictions);
+        // console.log("predicted_index");
+        // console.log(predicted_index);
+        // const squaredpredictions = predictions.map((p) => p * p);
+        // console.log("squaredpredictions");
+        // console.log(squaredpredictions);;
+        const predictionsTensor = tf.tensor1d(predictions);
+        const score = predictionsTensor.softmax().max().dataSync()[0];
 
+        // console.log("score");
+        // console.log(score);
         const predictedClass = classLabels[predicted_index];
-        const confidence = Math.round(predictions[predicted_index] * 100);
-
+        const confidence = Math.round(score * 100);
         return [predictedClass, confidence];
       });
 
@@ -142,8 +161,8 @@ function App() {
       const model_url = "model/model.json";
 
       const model = await tf.loadGraphModel(model_url);
-      console.log("model");
-      console.log(model);
+      // console.log("model");
+      // console.log(model);
 
       setModel(model);
     };
@@ -158,7 +177,6 @@ function App() {
     getClassLabels();
   }, []);
 
-  console.log(loading);
   return (
     <div className={classes.root}>
       <Title order={3} align="center">
@@ -183,30 +201,52 @@ function App() {
               loading={loading}
               onDrop={(files) => {
                 console.log("accepted files", files);
+                setErrorText(null);
                 handleImageChange(files);
               }}
-              onReject={(files) => console.log("rejected files", files)}
+              onReject={(files) => {
+                setErrorText(
+                  `File ${files[0].file.name} rejected: ${files[0].errors[0].message}`
+                );
+                console.log("rejected files", files);
+                setConfidence(null);
+                setPredictedClass(null);
+                setPicture(null);
+              }}
               maxSize={3 * 1024 ** 2}
               accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
             >
               {(status) => dropzoneChildren(status, theme)}
             </Dropzone>
-            <Stack
-              style={{ marginTop: "2em", width: "12rem" }}
-              direction="row"
-              spacing={1}
-            >
-              <Text size="xl">
-                {predictedClass === null
-                  ? "Prediction:"
-                  : `Prediction: ${predictedClass}`}
-              </Text>
-              <Text size="xl">
-                {confidence === null
-                  ? "Confidence:"
-                  : `Confidence: ${confidence}%`}
-              </Text>
-            </Stack>
+            <Group className={classes.group} direction="row" spacing={1}>
+              <img
+                className={classes.img}
+                alt=""
+                src={picture && picture}
+              ></img>
+              <Group className={classes.group} direction="column" spacing={1}>
+                {!errorText && (
+                  <>
+                    <Text size="xl">
+                      <b>Image:</b> {` ${picturePath ?? ""}`}
+                    </Text>
+                    <Text size="xl">
+                      <b>Prediction:</b> {` ${predictedClass ?? ""}`}
+                    </Text>
+                    <Text size="xl">
+                      <b>Confidence:</b> {` ${confidence ?? ""}%`}
+                    </Text>
+                  </>
+                )}
+
+                {errorText && (
+                  <Text size="xl">
+                    <b>ERROR:</b>
+                    {` ${errorText}`}
+                  </Text>
+                )}
+              </Group>
+            </Group>
           </div>
         ) : (
           <div>Loading model...</div>
