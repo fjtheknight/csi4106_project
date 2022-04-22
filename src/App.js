@@ -112,7 +112,7 @@ function App() {
   const [progress, setProgress] = useState(0);
 
   const [workerStatus, setWorkerStatus] = useState(null);
-  const [worker, setWorker] = useState(
+  const [worker] = useState(
     createWorker({
       logger: (m) => {
         console.log(m);
@@ -297,7 +297,7 @@ function App() {
                           (Analysing Text: {` ${progress ?? ""}%`})
                         </Text>
                       </div>
-                    ) : progress === 100 ? (
+                    ) : progress === 100 && ocr ? (
                       <div>
                         <Text size="xl">
                           <b>Clinic Name:</b> {` ${clinicName ?? ""}`}
