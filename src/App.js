@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import * as tf from "@tensorflow/tfjs";
+import { createWorker } from "tesseract.js";
 
 import {
   Group,
@@ -22,7 +23,7 @@ const useStyles = createStyles((theme) => ({
   },
   img: {
     maxWidth: 200,
-    maxHeight: 120,
+    maxHeight: 150,
   },
 }));
 
@@ -50,7 +51,7 @@ export const dropzoneChildren = (status, theme) => (
   <Group
     position="center"
     spacing="xl"
-    style={{ minHeight: 220, pointerEvents: "none" }}
+    style={{ minHeight: 120, pointerEvents: "none" }}
   >
     <ImageUploadIcon
       status={status}
@@ -103,6 +104,60 @@ function App() {
   const [picture, setPicture] = useState(null);
   const [picturePath, setPicturePath] = useState(null);
   const [errorText, setErrorText] = useState(null);
+
+  // OCR part:
+  const [ocr, setOcr] = useState("");
+  const [clinicName, setClinicName] = useState("");
+  const [clinicAddress, setClinicAddress] = useState("");
+  const [progress, setProgress] = useState(0);
+
+  const [workerStatus, setWorkerStatus] = useState(null);
+  const [worker] = useState(
+    createWorker({
+      logger: (m) => {
+        console.log(m);
+        setWorkerStatus(m.status);
+        setProgress(parseInt(m.progress * 100));
+      },
+    })
+  );
+
+  useEffect(() => {
+    const getTextFromImage = async () => {
+      if (!picture || predictedClass === "none") return;
+      await worker.load();
+      await worker.loadLanguage("eng");
+      await worker.initialize("eng");
+      const {
+        data: { text },
+      } = await worker.recognize(picture);
+      console.log(`OCR text: ${text}`);
+
+      if (predictedClass === "canada_ontario_cvo") {
+        // look up position of clinic name and adress
+
+        let start = null;
+        start = text.search("certifies that:\n") + 15;
+        if (!start) start = text.search("certifies that\n") + 14;
+        const end = text.search("\nhaving been duly inspected");
+        const array = text.substring(start, end).split(/\r?\n/);
+        console.log("start");
+        console.log(start);
+        console.log("end");
+        console.log(end);
+        console.log(array);
+        setClinicName(
+          array[0] === " " || array[0] === "" ? array[1] : array[0]
+        );
+        setClinicAddress(
+          array[0] === " " || array[0] === "" ? array[2] : array[1]
+        );
+        setOcr(text);
+      }
+    };
+
+    getTextFromImage();
+  }, [picture, classLabels, predictedClass, worker]);
 
   const handleImageChange = async (files) => {
     setLoading(true);
@@ -236,6 +291,24 @@ function App() {
                     <Text size="xl">
                       <b>Confidence:</b> {` ${confidence ?? ""}%`}
                     </Text>
+                    {workerStatus === "recognizing text" && progress !== 100 ? (
+                      <div>
+                        <Text size="lg">
+                          (Analysing Text: {` ${progress ?? ""}%`})
+                        </Text>
+                      </div>
+                    ) : progress === 100 && ocr ? (
+                      <div>
+                        <Text size="xl">
+                          <b>Clinic Name:</b> {` ${clinicName ?? ""}`}
+                        </Text>
+                        <Text size="xl">
+                          <b>Clinic Address:</b> {` ${clinicAddress ?? ""}`}
+                        </Text>
+                      </div>
+                    ) : (
+                      <></>
+                    )}
                   </>
                 )}
 
